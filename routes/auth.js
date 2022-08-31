@@ -2,6 +2,7 @@ const router = require("express").Router();
 const User = require("../models/User.model");
 const dotenv = require("dotenv")
 const CryptoJS = require("crypto-js")
+const jwt = require("jsonwebtoken")
 
 dotenv.config()
 
@@ -34,12 +35,20 @@ router.post('/login', async (req, res) => {
 
         Ogpassword != req.body.password && res.status(401).json("Wrong Password!")
 
-        const {password, ...others} = user._doc;
+        const accessToken = jwt.sign({
+            id: user._id,
+            isAdmin: user.isAdmin
+        },
+            process.env.JWT_SEC,
+            { expiresIn: "3d" }
+        )
 
-        res.status(200).json(others)
+        const { password, ...others } = user._doc;
+
+        res.status(200).json({...others, accessToken})
 
     }
-    catch(err){
+    catch (err) {
         res.status(500).json(err)
     }
 })
